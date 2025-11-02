@@ -63,6 +63,11 @@ namespace personapi_dotnet.Controllers
             {
                 try
                 {
+                    // Generar el ID manualmente si no es autogenerado en la base de datos
+                    var profesiones = await _profesionDAO.GetAllAsync();
+                    var maxId = profesiones.Any() ? profesiones.Max(p => p.Id) : 0;
+                    profesion.Id = maxId + 1;
+                    
                     await _profesionDAO.AddAsync(profesion);
                     await _profesionDAO.SaveAsync();
                     return RedirectToAction(nameof(Index));
