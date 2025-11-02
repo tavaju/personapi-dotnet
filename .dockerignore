@@ -1,0 +1,124 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Documentation
+*.md
+README*
+LICENSE*
+CHANGELOG*
+docs/
+
+# Build outputs
+bin/
+obj/
+[Dd]ebug/
+[Rr]elease/
+[Bb]uild/
+*.dll
+*.exe
+*.pdb
+*.cache
+
+# Visual Studio
+.vs/
+.vscode/
+*.user
+*.suo
+*.sln.docstates
+*.code-workspace
+
+# JetBrains Rider
+.idea/
+*.sln.iml
+
+# .NET
+project.lock.json
+project.fragment.lock.json
+artifacts/
+*.nupkg
+*.snupkg
+**/packages/*
+!**/packages/build/
+*.nuget.props
+*.nuget.targets
+.csproj.nuget.g.props
+.csproj.nuget.g.targets
+project.assets.json
+project.nuget.cache
+
+# Logs and diagnostics
+*.log
+*.tlog
+logs/
+*.trx
+*.coverage
+*.coveragexml
+
+# Test results
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+*_i.c
+*_p.c
+*_h.h
+*.ilk
+*.meta
+*.obj
+*.iobj
+*.pch
+*.ipdb
+*.pgc
+*.pgd
+*.rsp
+*.sbr
+*.tlb
+*.tli
+*.tlh
+*.tmp
+*.vspscc
+*.vssscc
+.builds
+*.pidb
+*.svclog
+*.scc
+
+# Temporary files
+*.swp
+*.swo
+*~
+*.bak
+*.tmp
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+$RECYCLE.BIN/
+
+# Docker
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# Environment and secrets (keep appsettings.json but ignore local overrides)
+appsettings.*.Local.json
+appsettings.*.Development.json
+*.Local.json
+secrets.json
+
+# Node modules (if using any frontend tooling)
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Coverage reports
+coverage/
+*.coverage
+*.coveragexml
+
