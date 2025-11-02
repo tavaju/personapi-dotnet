@@ -1,0 +1,12 @@
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using personapi_dotnet.Models.Entities;
+
+namespace personapi_dotnet.Models.DAO.Interfaces
+{
+    public interface IEstudioDAO : IGenericDAO<Estudio>
+    {
+        Task<IEnumerable<Estudio>> GetByPersonaAsync(int ccPer);
+        Task<IEnumerable<Estudio>> GetByProfesionAsync(int idProf);
+    }
+}
