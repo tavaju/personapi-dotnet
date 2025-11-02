@@ -1,7 +1,9 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using personapi_dotnet.Models.Entities;
 using personapi_dotnet.Models.DAO.Interfaces;
 using personapi_dotnet.Models.DAO.Implementations;
+using System.Threading.Tasks;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,6 +31,8 @@ builder.Services.AddScoped<IProfesionDAO, ProfesionDAO>();
 
 var app = builder.Build();
 
+await InitializeDatabaseAsync(app);
+
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
@@ -54,3 +58,40 @@ app.MapControllerRoute(
 app.MapControllers();
 
 app.Run();
+
+static async Task InitializeDatabaseAsync(WebApplication app)
+{
+    const int maxIntentos = 10;
+    var espera = TimeSpan.FromSeconds(5);
+
+    using var scope = app.Services.CreateScope();
+    var services = scope.ServiceProvider;
+    var logger = services.GetRequiredService<ILogger<Program>>();
+    var context = services.GetRequiredService<PersonaDbContext>();
+
+    for (var intento = 1; intento <= maxIntentos; intento++)
+    {
+        try
+        {
+            if (!await context.Database.CanConnectAsync())
+            {
+                throw new InvalidOperationException("La base de datos aún no acepta conexiones.");
+            }
+
+            await context.Database.EnsureCreatedAsync();
+            logger.LogInformation("Base de datos inicializada correctamente en el intento {Intento}.", intento);
+            return;
+        }
+        catch (Exception ex)
+        {
+            if (intento == maxIntentos)
+            {
+                logger.LogError(ex, "No se pudo inicializar la base de datos después de {MaxIntentos} intentos.", maxIntentos);
+                throw;
+            }
+
+            logger.LogWarning(ex, "Error al inicializar la base de datos en el intento {Intento}/{MaxIntentos}. Reintentando en {Espera}...", intento, maxIntentos, espera);
+            await Task.Delay(espera);
+        }
+    }
+}

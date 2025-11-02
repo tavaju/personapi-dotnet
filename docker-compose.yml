@@ -36,21 +36,6 @@ services:
       start_period: 10s
       timeout: 3s
 
-  sql_server.configurator:
-    container_name: configurator
-    image: mcr.microsoft.com/mssql/server:2022-latest
-    volumes:
-      - ./scripts:/docker-entrypoint-initdb.d
-    depends_on:
-      sql_server:
-        condition: service_healthy
-    command: >
-      bash -c '
-      /opt/mssql-tools18/bin/sqlcmd -S sql_server -U sa -P Password123 -d master -C -i docker-entrypoint-initdb.d/init.sql;
-      /opt/mssql-tools18/bin/sqlcmd -S sql_server -U sa -P Password123 -d master -C -i docker-entrypoint-initdb.d/example.sql;
-      echo "All done!";
-      '
-
 volumes:
   mssql_data:
 
