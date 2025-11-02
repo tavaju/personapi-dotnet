@@ -83,11 +83,39 @@ namespace personapi_dotnet.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("IdProf,CcPer,Fecha,Univer")] Estudio estudio)
         {
+            // Remover errores de validación para propiedades de navegación
+            ModelState.Remove("CcPerNavigation");
+            ModelState.Remove("IdProfNavigation");
+
+            // Verificar si ya existe un estudio con la misma clave primaria compuesta
+            var estudios = await _estudioDAO.GetByProfesionAsync(estudio.IdProf);
+            var estudioExistente = estudios.FirstOrDefault(e => e.IdProf == estudio.IdProf && e.CcPer == estudio.CcPer);
+            
+            if (estudioExistente != null)
+            {
+                ModelState.AddModelError(string.Empty, "Ya existe un estudio con esta combinación de Profesión y Persona.");
+            }
+
             if (ModelState.IsValid)
             {
-                await _estudioDAO.AddAsync(estudio);
-                await _estudioDAO.SaveAsync();
-                return RedirectToAction(nameof(Index));
+                try
+                {
+                    await _estudioDAO.AddAsync(estudio);
+                    await _estudioDAO.SaveAsync();
+                    return RedirectToAction(nameof(Index));
+                }
+                catch (DbUpdateException ex)
+                {
+                    // Capturar errores de clave duplicada u otros errores de base de datos
+                    if (ex.InnerException != null && ex.InnerException.Message.Contains("PRIMARY KEY"))
+                    {
+                        ModelState.AddModelError(string.Empty, "Ya existe un estudio con esta combinación de Profesión y Persona.");
+                    }
+                    else
+                    {
+                        ModelState.AddModelError(string.Empty, "Ocurrió un error al guardar el estudio. Por favor, intente nuevamente.");
+                    }
+                }
             }
             var personas = await _personaDAO.GetAllAsync();
             var profesiones = await _profesionDAO.GetAllAsync();
@@ -132,11 +160,28 @@ namespace personapi_dotnet.Controllers
                 return NotFound();
             }
 
+            // Remover errores de validación para propiedades de navegación
+            ModelState.Remove("CcPerNavigation");
+            ModelState.Remove("IdProfNavigation");
+
             if (ModelState.IsValid)
             {
                 try
                 {
-                    await _estudioDAO.UpdateAsync(estudio);
+                    // Cargar el estudio existente desde la base de datos
+                    var estudios = await _estudioDAO.GetByProfesionAsync(estudio.IdProf);
+                    var estudioExistente = estudios.FirstOrDefault(e => e.IdProf == estudio.IdProf && e.CcPer == estudio.CcPer);
+                    
+                    if (estudioExistente == null)
+                    {
+                        return NotFound();
+                    }
+
+                    // Actualizar solo los campos editables
+                    estudioExistente.Fecha = estudio.Fecha;
+                    estudioExistente.Univer = estudio.Univer;
+
+                    await _estudioDAO.UpdateAsync(estudioExistente);
                     await _estudioDAO.SaveAsync();
                 }
                 catch (DbUpdateConcurrencyException)

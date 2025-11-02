@@ -8,6 +8,11 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
+// Add controllers
+builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
 // Agregar el contexto de base de datos con EF Core
 builder.Services.AddDbContext<PersonaDbContext>(options =>
     options.UseSqlServer(
@@ -29,14 +34,23 @@ if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
 }
+
+// SWAGGER
+app.UseSwagger();
+app.UseSwaggerUI();
+
 app.UseStaticFiles();
 
 app.UseRouting();
 
 app.UseAuthorization();
 
+// Mapear rutas de controladores MVC primero (controladores tradicionales)
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
+
+// Mapear controladores API (con atributos [Route])
+app.MapControllers();
 
 app.Run();

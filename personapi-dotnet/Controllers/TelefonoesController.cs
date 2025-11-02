@@ -72,11 +72,37 @@ namespace personapi_dotnet.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Num,Oper,Duenio")] Telefono telefono)
         {
+            // Remover errores de validación para propiedades de navegación
+            ModelState.Remove("DuenioNavigation");
+
+            // Verificar si ya existe un teléfono con el mismo número
+            var telefonoExistente = await _telefonoDAO.GetByIdAsync(telefono.Num);
+            
+            if (telefonoExistente != null)
+            {
+                ModelState.AddModelError("Num", "Ya existe un teléfono con este número.");
+            }
+
             if (ModelState.IsValid)
             {
-                await _telefonoDAO.AddAsync(telefono);
-                await _telefonoDAO.SaveAsync();
-                return RedirectToAction(nameof(Index));
+                try
+                {
+                    await _telefonoDAO.AddAsync(telefono);
+                    await _telefonoDAO.SaveAsync();
+                    return RedirectToAction(nameof(Index));
+                }
+                catch (DbUpdateException ex)
+                {
+                    // Capturar errores de clave duplicada u otros errores de base de datos
+                    if (ex.InnerException != null && ex.InnerException.Message.Contains("PRIMARY KEY"))
+                    {
+                        ModelState.AddModelError("Num", "Ya existe un teléfono con este número.");
+                    }
+                    else
+                    {
+                        ModelState.AddModelError(string.Empty, "Ocurrió un error al guardar el teléfono. Por favor, intente nuevamente.");
+                    }
+                }
             }
             var personas = await _personaDAO.GetAllAsync();
             ViewData["Duenio"] = new SelectList(personas, "Cc", "Cc", telefono.Duenio);
@@ -113,11 +139,26 @@ namespace personapi_dotnet.Controllers
                 return NotFound();
             }
 
+            // Remover errores de validación para propiedades de navegación
+            ModelState.Remove("DuenioNavigation");
+
             if (ModelState.IsValid)
             {
                 try
                 {
-                    await _telefonoDAO.UpdateAsync(telefono);
+                    // Cargar el teléfono existente desde la base de datos
+                    var telefonoExistente = await _telefonoDAO.GetByIdAsync(telefono.Num);
+                    
+                    if (telefonoExistente == null)
+                    {
+                        return NotFound();
+                    }
+
+                    // Actualizar solo los campos editables
+                    telefonoExistente.Oper = telefono.Oper;
+                    telefonoExistente.Duenio = telefono.Duenio;
+
+                    await _telefonoDAO.UpdateAsync(telefonoExistente);
                     await _telefonoDAO.SaveAsync();
                 }
                 catch (DbUpdateConcurrencyException)

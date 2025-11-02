@@ -55,11 +55,38 @@ namespace personapi_dotnet.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Cc,Nombre,Apellido,Genero,Edad")] Persona persona)
         {
+            // Remover errores de validación para propiedades de navegación
+            ModelState.Remove("Estudios");
+            ModelState.Remove("Telefonos");
+
+            // Verificar si ya existe una persona con la misma cédula
+            var personaExistente = await _personaDAO.GetByIdAsync(persona.Cc);
+            
+            if (personaExistente != null)
+            {
+                ModelState.AddModelError("Cc", "Ya existe una persona con esta cédula.");
+            }
+
             if (ModelState.IsValid)
             {
-                await _personaDAO.AddAsync(persona);
-                await _personaDAO.SaveAsync();
-                return RedirectToAction(nameof(Index));
+                try
+                {
+                    await _personaDAO.AddAsync(persona);
+                    await _personaDAO.SaveAsync();
+                    return RedirectToAction(nameof(Index));
+                }
+                catch (DbUpdateException ex)
+                {
+                    // Capturar errores de clave duplicada u otros errores de base de datos
+                    if (ex.InnerException != null && ex.InnerException.Message.Contains("PRIMARY KEY"))
+                    {
+                        ModelState.AddModelError("Cc", "Ya existe una persona con esta cédula.");
+                    }
+                    else
+                    {
+                        ModelState.AddModelError(string.Empty, "Ocurrió un error al guardar la persona. Por favor, intente nuevamente.");
+                    }
+                }
             }
             return View(persona);
         }
@@ -92,11 +119,29 @@ namespace personapi_dotnet.Controllers
                 return NotFound();
             }
 
+            // Remover errores de validación para propiedades de navegación
+            ModelState.Remove("Estudios");
+            ModelState.Remove("Telefonos");
+
             if (ModelState.IsValid)
             {
                 try
                 {
-                    await _personaDAO.UpdateAsync(persona);
+                    // Cargar la persona existente desde la base de datos
+                    var personaExistente = await _personaDAO.GetByIdAsync(persona.Cc);
+                    
+                    if (personaExistente == null)
+                    {
+                        return NotFound();
+                    }
+
+                    // Actualizar solo los campos editables
+                    personaExistente.Nombre = persona.Nombre;
+                    personaExistente.Apellido = persona.Apellido;
+                    personaExistente.Genero = persona.Genero;
+                    personaExistente.Edad = persona.Edad;
+
+                    await _personaDAO.UpdateAsync(personaExistente);
                     await _personaDAO.SaveAsync();
                 }
                 catch (DbUpdateConcurrencyException)

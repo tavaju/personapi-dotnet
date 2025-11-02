@@ -53,13 +53,33 @@ namespace personapi_dotnet.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Nom,Des")] Profesion profesion)
+        public async Task<IActionResult> Create([Bind("Nom,Des")] Profesion profesion)
         {
+            // Remover errores de validación para propiedades de navegación
+            ModelState.Remove("Estudios");
+            ModelState.Remove("Id"); // El Id se genera automáticamente
+
             if (ModelState.IsValid)
             {
-                await _profesionDAO.AddAsync(profesion);
-                await _profesionDAO.SaveAsync();
-                return RedirectToAction(nameof(Index));
+                try
+                {
+                    await _profesionDAO.AddAsync(profesion);
+                    await _profesionDAO.SaveAsync();
+                    return RedirectToAction(nameof(Index));
+                }
+                catch (DbUpdateException ex)
+                {
+                    // Capturar errores de base de datos y mostrar detalles en desarrollo
+                    var errorMessage = "Ocurrió un error al guardar la profesión. Por favor, intente nuevamente.";
+                    
+                    // En desarrollo, mostrar más detalles del error
+                    if (ex.InnerException != null)
+                    {
+                        errorMessage += $" Error: {ex.InnerException.Message}";
+                    }
+                    
+                    ModelState.AddModelError(string.Empty, errorMessage);
+                }
             }
             return View(profesion);
         }
@@ -92,11 +112,26 @@ namespace personapi_dotnet.Controllers
                 return NotFound();
             }
 
+            // Remover errores de validación para propiedades de navegación
+            ModelState.Remove("Estudios");
+
             if (ModelState.IsValid)
             {
                 try
                 {
-                    await _profesionDAO.UpdateAsync(profesion);
+                    // Cargar la profesión existente desde la base de datos
+                    var profesionExistente = await _profesionDAO.GetByIdAsync(profesion.Id);
+                    
+                    if (profesionExistente == null)
+                    {
+                        return NotFound();
+                    }
+
+                    // Actualizar solo los campos editables
+                    profesionExistente.Nom = profesion.Nom;
+                    profesionExistente.Des = profesion.Des;
+
+                    await _profesionDAO.UpdateAsync(profesionExistente);
                     await _profesionDAO.SaveAsync();
                 }
                 catch (DbUpdateConcurrencyException)

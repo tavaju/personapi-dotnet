@@ -86,7 +86,7 @@ public partial class PersonaDbContext : DbContext
             entity.ToTable("profesion");
 
             entity.Property(e => e.Id)
-                .ValueGeneratedNever()
+                .UseIdentityColumn()
                 .HasColumnName("id");
             entity.Property(e => e.Des).HasColumnName("des");
             entity.Property(e => e.Nom)
