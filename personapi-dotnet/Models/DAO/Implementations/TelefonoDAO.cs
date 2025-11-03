@@ -23,7 +23,6 @@ namespace personapi_dotnet.Models.DAO.Implementations
 
         public async Task<Telefono?> GetByIdAsync(object id)
         {
-            // Telefono tiene clave primaria Num (string)
             if (id is string num)
             {
                 return await _context.Telefonos.FindAsync(num);
@@ -68,3 +67,5 @@ namespace personapi_dotnet.Models.DAO.Implementations
         }
     }
 }
+
+

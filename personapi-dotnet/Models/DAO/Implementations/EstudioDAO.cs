@@ -23,8 +23,6 @@ namespace personapi_dotnet.Models.DAO.Implementations
 
         public async Task<Estudio?> GetByIdAsync(object id)
         {
-            // Estudio tiene clave compuesta (IdProf, CcPer)
-            // El id debe ser un objeto con ambos valores, como (int idProf, int ccPer) o un ValueTuple
             if (id is ValueTuple<int, int> tuple)
             {
                 return await _context.Estudios
@@ -45,7 +43,6 @@ namespace personapi_dotnet.Models.DAO.Implementations
 
         public async Task DeleteAsync(object id)
         {
-            // Estudio tiene clave compuesta (IdProf, CcPer)
             if (id is ValueTuple<int, int> tuple)
             {
                 var estudio = await _context.Estudios
@@ -75,3 +72,5 @@ namespace personapi_dotnet.Models.DAO.Implementations
         }
     }
 }
+
+

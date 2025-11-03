@@ -8,5 +8,12 @@ namespace personapi_dotnet.Models.DAO.Interfaces
     {
         Task<IEnumerable<Telefono>> GetByOperadorAsync(string oper);
         Task<IEnumerable<Telefono>> GetByDuenioAsync(int duenio);
+        Task<IEnumerable<Telefono>> GetAllAsync();
+        Task<Telefono?> GetByIdAsync(object id);
+        Task AddAsync(Telefono entity);
+        Task UpdateAsync(Telefono entity);
+        Task DeleteAsync(object id);
+        Task SaveAsync();
     }
 }
+

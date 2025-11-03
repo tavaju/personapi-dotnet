@@ -8,5 +8,13 @@ namespace personapi_dotnet.Models.DAO.Interfaces
     {
         Task<IEnumerable<Estudio>> GetByPersonaAsync(int ccPer);
         Task<IEnumerable<Estudio>> GetByProfesionAsync(int idProf);
+        Task<IEnumerable<Estudio>> GetAllAsync();
+        Task<Estudio?> GetByIdAsync(object id);
+        Task AddAsync(Estudio entity);
+        Task UpdateAsync(Estudio entity);
+        Task DeleteAsync(object id);
+        Task SaveAsync();
     }
 }
+
+
