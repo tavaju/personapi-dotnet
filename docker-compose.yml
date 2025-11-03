@@ -1,3 +1,4 @@
+version: "3.9"
 name: personapi
 
 services:
@@ -9,7 +10,10 @@ services:
     ports:
       - "5233:8080"
     depends_on:
-      - sql_server
+      sql_server:
+        condition: service_healthy
+      sql_init:
+        condition: service_completed_successfully
     environment:
       ConnectionStrings__DefaultConnection: "Server=sql_server,1433;Database=persona_db;User Id=sa;Password=Password123;TrustServerCertificate=True;"
       ASPNETCORE_ENVIRONMENT: Development
@@ -35,6 +39,34 @@ services:
       retries: 10
       start_period: 10s
       timeout: 3s
+
+  sql_init:
+    image: mcr.microsoft.com/mssql-tools:latest
+    depends_on:
+      sql_server:
+        condition: service_healthy
+    volumes:
+      - ./scripts:/scripts:ro
+    command: >
+      /bin/bash -c '
+      set -e;
+      echo "Esperando a SQL Server...";
+      for i in {1..30}; do
+        if /opt/mssql-tools/bin/sqlcmd -S sql_server -U sa -P Password123 -C -Q "SELECT 1" 2>/dev/null; then
+          echo "SQL Server está listo.";
+          break;
+        fi;
+        echo "SQL Server aún no está listo, esperando... (intento $i/30)";
+        sleep 2;
+      done;
+      echo "Creando base de datos...";
+      /opt/mssql-tools/bin/sqlcmd -S sql_server -U sa -P Password123 -C -Q "CREATE DATABASE persona_db;" 2>/dev/null || echo "Base de datos ya existe o fue creada.";
+      echo "Ejecutando DDL.sql...";
+      /opt/mssql-tools/bin/sqlcmd -S sql_server -U sa -P Password123 -C -d persona_db -i /scripts/DDL.sql;
+      echo "Ejecutando DML.sql...";
+      /opt/mssql-tools/bin/sqlcmd -S sql_server -U sa -P Password123 -C -d persona_db -i /scripts/DML.sql;
+      echo "Inicialización completada exitosamente.";
+      '
 
 volumes:
   mssql_data:
