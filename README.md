@@ -370,14 +370,7 @@ personapi-dotnet/
 
 Antes de comenzar, asegúrate de tener instalado:
 
-1. **.NET 8.0 SDK** o superior
-   - Descarga: https://dotnet.microsoft.com/download/dotnet/8.0
-   - Verifica la instalación:
-     ```bash
-     dotnet --version
-     ```
-
-2. **Docker Desktop** (para ejecución con contenedores)
+1. **Docker Desktop**
    - Windows/Mac: https://www.docker.com/products/docker-desktop
    - Linux: Instalar Docker Engine y Docker Compose
    - Verifica la instalación:
@@ -386,69 +379,16 @@ Antes de comenzar, asegúrate de tener instalado:
      docker-compose --version
      ```
 
+2. **VS Code** (opcional, para edición de código)
+   - Descarga: https://code.visualstudio.com/
+   - Extensiones recomendadas:
+     - C# (Microsoft)
+     - Docker (Microsoft)
+
 3. **Git** (opcional, para clonar el repositorio)
    - Descarga: https://git-scm.com/downloads
 
-4. **SQL Server** (opcional, para desarrollo local sin Docker)
-   - SQL Server Express: https://www.microsoft.com/sql-server/sql-server-downloads
-   - O SQL Server en contenedor (incluido en docker-compose)
-
-### Opción 1: Instalación Local (Sin Docker)
-
-#### Paso 1: Clonar el Repositorio
-
-```bash
-git clone <url-del-repositorio>
-cd personapi-dotnet
-```
-
-#### Paso 2: Configurar SQL Server Local
-
-1. Instala SQL Server Express o SQL Server Developer
-2. Crea una base de datos llamada `persona_db`
-3. Ejecuta los scripts SQL en orden:
-   ```bash
-   # Conecta a SQL Server usando sqlcmd o SQL Server Management Studio
-   sqlcmd -S localhost\SQLEXPRESS -U sa -P tu_password -i scripts/DDL.sql
-   sqlcmd -S localhost\SQLEXPRESS -U sa -P tu_password -d persona_db -i scripts/DML.sql
-   ```
-
-#### Paso 3: Configurar Cadena de Conexión
-
-Edita el archivo `personapi-dotnet/appsettings.json`:
-
-```json
-{
-  "ConnectionStrings": {
-    "DefaultConnection": "Server=localhost\\SQLEXPRESS;Database=persona_db;User Id=sa;Password=tu_password;TrustServerCertificate=True;"
-  }
-}
-```
-
-O si usas autenticación de Windows:
-
-```json
-{
-  "ConnectionStrings": {
-    "DefaultConnection": "Server=localhost\\SQLEXPRESS;Database=persona_db;Trusted_Connection=True;TrustServerCertificate=True;"
-  }
-}
-```
-
-#### Paso 4: Restaurar Dependencias
-
-```bash
-cd personapi-dotnet
-dotnet restore
-```
-
-#### Paso 5: Compilar el Proyecto
-
-```bash
-dotnet build
-```
-
-### Opción 2: Instalación con Docker (Recomendado)
+### Instalación con Docker
 
 #### Paso 1: Clonar el Repositorio
 
@@ -478,33 +418,7 @@ Este comando:
 
 ## 🚀 Ejecución
 
-### Opción 1: Ejecución Local (Sin Docker)
-
-#### Método 1: CLI de .NET
-
-```bash
-cd personapi-dotnet
-dotnet run
-```
-
-La aplicación estará disponible en:
-- **HTTP**: http://localhost:5258
-- **Swagger UI**: http://localhost:5258/swagger
-
-#### Método 2: Visual Studio / VS Code
-
-1. Abre el archivo `personapi-dotnet.sln` en Visual Studio
-2. O abre la carpeta `personapi-dotnet` en VS Code
-3. Presiona `F5` o ejecuta "Run and Debug"
-4. Selecciona el perfil "http" en `launchSettings.json`
-
-#### Método 3: Ejecutar con Perfil Específico
-
-```bash
-dotnet run --launch-profile http
-```
-
-### Opción 2: Ejecución con Docker
+### Opción 1: Ejecución con Docker
 
 #### Ejecutar en Primer Plano
 
@@ -535,9 +449,17 @@ Deberías ver:
 - **Swagger UI**: http://localhost:5233/swagger
 - **SQL Server**: localhost:1433
 
+### Opción 2: Ejecución con VS Code
+
+1. Abre la carpeta `personapi-dotnet` en VS Code
+2. Asegúrate de tener Docker Desktop ejecutándose
+3. Presiona `F5` o ejecuta "Run and Debug"
+4. Selecciona el perfil "Container (Dockerfile)" en `launchSettings.json`
+5. La aplicación se ejecutará en el contenedor Docker
+
 ### Verificar Funcionamiento
 
-1. Abre tu navegador en http://localhost:5233 (Docker) o http://localhost:5258 (Local)
+1. Abre tu navegador en http://localhost:5233
 2. Deberías ver la página de inicio
 3. Navega a las secciones:
    - Personas
@@ -554,7 +476,6 @@ La aplicación expone una API REST completa documentada con Swagger. Accede a la
 
 ### Base URL
 
-- **Local**: `http://localhost:5258/api`
 - **Docker**: `http://localhost:5233/api`
 
 ### Endpoints Disponibles
@@ -646,7 +567,7 @@ curl -X DELETE http://localhost:5233/api/Personas/1001
 
 ## 🚢 Despliegue
 
-### Opción 1: Despliegue con Docker Compose
+### Despliegue con Docker Compose
 
 #### Producción
 
@@ -685,188 +606,6 @@ export ASPNETCORE_ENVIRONMENT=Production
 
 docker-compose up -d
 ```
-
-### Opción 2: Despliegue en Azure App Service
-
-#### Paso 1: Preparar la Aplicación
-
-1. Publica la aplicación:
-   ```bash
-   dotnet publish -c Release -o ./publish
-   ```
-
-2. Crea un archivo `.deployment`:
-   ```
-   [config]
-   project = personapi-dotnet/personapi-dotnet.csproj
-   ```
-
-#### Paso 2: Configurar Azure SQL Database
-
-1. Crea una instancia de Azure SQL Database
-2. Obtén la cadena de conexión
-3. Configura en Azure App Service → Configuration → Connection Strings
-
-#### Paso 3: Desplegar
-
-```bash
-# Instalar Azure CLI
-az login
-
-# Crear grupo de recursos
-az group create --name personapi-rg --location eastus
-
-# Crear App Service Plan
-az appservice plan create --name personapi-plan --resource-group personapi-rg --sku B1 --is-linux
-
-# Crear Web App
-az webapp create --resource-group personapi-rg --plan personapi-plan --name personapi-app --runtime "DOTNETCORE:8.0"
-
-# Desplegar aplicación
-az webapp deployment source config-zip --resource-group personapi-rg --name personapi-app --src ./publish.zip
-```
-
-### Opción 3: Despliegue en Servidor Linux
-
-#### Requisitos del Servidor
-
-- Ubuntu 20.04+ o similar
-- .NET 8.0 Runtime
-- SQL Server Linux o SQL Server en contenedor
-- Nginx (opcional, como reverse proxy)
-
-#### Pasos de Despliegue
-
-1. **Instalar .NET Runtime:**
-
-   ```bash
-   wget https://dot.net/v1/dotnet-install.sh
-   chmod +x dotnet-install.sh
-   ./dotnet-install.sh --runtime aspnetcore --version 8.0.0
-   ```
-
-2. **Configurar SQL Server:**
-
-   ```bash
-   # Si usas SQL Server en contenedor
-   docker run -e "ACCEPT_EULA=Y" -e "SA_PASSWORD=Password123" \
-     -p 1433:1433 --name sql_server \
-     -d mcr.microsoft.com/mssql/server:2022-latest
-   ```
-
-3. **Publicar la aplicación:**
-
-   ```bash
-   dotnet publish -c Release -o /var/www/personapi
-   ```
-
-4. **Configurar systemd service:**
-
-   Crea `/etc/systemd/system/personapi.service`:
-
-   ```ini
-   [Unit]
-   Description=PersonAPI .NET Application
-   After=network.target
-
-   [Service]
-   Type=notify
-   WorkingDirectory=/var/www/personapi
-   ExecStart=/usr/bin/dotnet /var/www/personapi/personapi-dotnet.dll
-   Restart=always
-   Environment=ASPNETCORE_ENVIRONMENT=Production
-   Environment=ConnectionStrings__DefaultConnection="Server=localhost,1433;Database=persona_db;User Id=sa;Password=Password123;TrustServerCertificate=True;"
-
-   [Install]
-   WantedBy=multi-user.target
-   ```
-
-5. **Iniciar el servicio:**
-
-   ```bash
-   sudo systemctl enable personapi
-   sudo systemctl start personapi
-   sudo systemctl status personapi
-   ```
-
-6. **Configurar Nginx (opcional):**
-
-   `/etc/nginx/sites-available/personapi`:
-
-   ```nginx
-   server {
-       listen 80;
-       server_name tu-dominio.com;
-
-       location / {
-           proxy_pass http://localhost:5000;
-           proxy_http_version 1.1;
-           proxy_set_header Upgrade $http_upgrade;
-           proxy_set_header Connection keep-alive;
-           proxy_set_header Host $host;
-           proxy_cache_bypass $http_upgrade;
-       }
-   }
-   ```
-
-### Opción 4: Despliegue en Kubernetes
-
-#### Crear Manifiestos Kubernetes
-
-1. **Deployment (`k8s/deployment.yaml`):**
-
-   ```yaml
-   apiVersion: apps/v1
-   kind: Deployment
-   metadata:
-     name: personapi
-   spec:
-     replicas: 2
-     selector:
-       matchLabels:
-         app: personapi
-     template:
-       metadata:
-         labels:
-           app: personapi
-       spec:
-         containers:
-         - name: personapi
-           image: personapi:latest
-           ports:
-           - containerPort: 8080
-           env:
-           - name: ASPNETCORE_ENVIRONMENT
-             value: "Production"
-           - name: ConnectionStrings__DefaultConnection
-             valueFrom:
-               secretKeyRef:
-                 name: db-secret
-                 key: connection-string
-   ```
-
-2. **Service (`k8s/service.yaml`):**
-
-   ```yaml
-   apiVersion: v1
-   kind: Service
-   metadata:
-     name: personapi-service
-   spec:
-     selector:
-       app: personapi
-     ports:
-     - protocol: TCP
-       port: 80
-       targetPort: 8080
-     type: LoadBalancer
-   ```
-
-3. **Aplicar:**
-
-   ```bash
-   kubectl apply -f k8s/
-   ```
 
 ---
 
@@ -947,79 +686,7 @@ docker logs sql_server
 
 ---
 
-## 📚 Información Adicional
 
-### Patrón DAO (Data Access Object)
-
-El proyecto implementa el patrón DAO para abstraer el acceso a datos:
-
-```mermaid
-graph TB
-    subgraph "Controller Layer"
-        C[Controllers]
-    end
-    
-    subgraph "DAO Layer"
-        I[DAO Interfaces<br/>IPersonaDAO, ITelefonoDAO, etc.]
-        IMP[DAO Implementations<br/>PersonaDAO, TelefonoDAO, etc.]
-    end
-    
-    subgraph "Entity Framework"
-        EF[EF Core]
-        DB[(SQL Server)]
-    end
-    
-    C -->|Dependency Injection| I
-    I -->|Implements| IMP
-    IMP -->|Uses| EF
-    EF --> DB
-    
-    style C fill:#e8f5e9
-    style I fill:#f3e5f5
-    style IMP fill:#f3e5f5
-    style EF fill:#ffebee
-    style DB fill:#ffebee
-```
-
-### Inyección de Dependencias
-
-La aplicación utiliza inyección de dependencias configurada en `Program.cs`:
-
-```csharp
-// Registrar DAOs
-builder.Services.AddScoped<IPersonaDAO, PersonaDAO>();
-builder.Services.AddScoped<ITelefonoDAO, TelefonoDAO>();
-builder.Services.AddScoped<IEstudioDAO, EstudioDAO>();
-builder.Services.AddScoped<IProfesionDAO, ProfesionDAO>();
-```
-
-### Logging
-
-El proyecto configura logging en `Program.cs`:
-
-```csharp
-builder.Services.AddDbContext<PersonaDbContext>(options =>
-    options.UseSqlServer(...)
-        .EnableSensitiveDataLogging()
-        .LogTo(Console.WriteLine, LogLevel.Information)
-);
-```
-
-### Configuración de Entornos
-
-- **Development**: `appsettings.Development.json`
-- **Production**: `appsettings.json`
-- Variable de entorno: `ASPNETCORE_ENVIRONMENT`
-
-### Seguridad
-
-⚠️ **Nota Importante para Producción:**
-
-- Cambiar contraseñas por defecto
-- Usar variables de entorno para cadenas de conexión
-- Habilitar HTTPS
-- Configurar CORS apropiadamente
-- Implementar autenticación y autorización si es necesario
 
 ---
 
@@ -1069,9 +736,9 @@ Este es un proyecto académico desarrollado con fines educativos.
 
 ---
 
-## 👥 Autor
+## 👥 Autores
 
-Proyecto desarrollado como ejercicio académico para Arquitectura de Software.
+Proyecto desarrollado como ejercicio académico para Arquitectura de Software por Valeria Arenas, Tatiana Vivas y Juan Pablo Cañón
 
 ---
 
@@ -1082,13 +749,5 @@ Proyecto desarrollado como ejercicio académico para Arquitectura de Software.
 - [Docker Documentation](https://docs.docker.com/)
 - [SQL Server Documentation](https://docs.microsoft.com/sql/)
 
----
 
-## 📞 Soporte
-
-Para problemas o preguntas sobre este proyecto, contacta al equipo de desarrollo o crea un issue en el repositorio.
-
----
-
-**Última actualización:** 2024
 
